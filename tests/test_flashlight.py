@@ -1,3 +1,5 @@
+from unittest.mock import Mock, call, patch
+
 import cv2
 import numpy as np
 
@@ -5,6 +7,26 @@ import flashlight
 from flashlight import SpotDetector, find_projection, order_corners
 
 CORNERS = np.array([[100, 120], [540, 110], [560, 400], [90, 380]], np.float32)  # camera pixels
+
+
+def test_native_camera_backends_are_preferred():
+    assert flashlight.camera_backends(platform="darwin", os_name="posix") == (
+        cv2.CAP_AVFOUNDATION, cv2.CAP_ANY)
+    assert flashlight.camera_backends(platform="win32", os_name="nt") == (cv2.CAP_DSHOW, cv2.CAP_ANY)
+    assert flashlight.camera_backends(platform="linux", os_name="posix") == (cv2.CAP_ANY,)
+
+
+def test_open_camera_falls_back_and_releases_failed_capture():
+    failed = Mock()
+    failed.isOpened.return_value = False
+    working = Mock()
+    working.isOpened.return_value = True
+    working.read.return_value = (True, np.zeros((2, 2, 3), np.uint8))
+    with patch("flashlight.camera_backends", return_value=(1200, 0)), \
+         patch("flashlight.cv2.VideoCapture", side_effect=(failed, working)) as video_capture:
+        assert flashlight.open_camera(2) is working
+    assert video_capture.call_args_list == [call(2, 1200), call(2, 0)]
+    failed.release.assert_called_once_with()
 
 
 def camera_view(screen_img):

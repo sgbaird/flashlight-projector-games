@@ -61,6 +61,29 @@ python fetch_art.py            # download the story pictures, scripture passages
 python activity.py --camera 1  # pick your camera; it opens on the last display (the projector)
 ```
 
+### macOS
+
+Use Python 3.12 in a virtual environment so the activity and its camera permission belong to a
+predictable, tested Python installation:
+
+```
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python fetch_art.py
+python activity.py --camera 0
+```
+
+The first camera run should prompt for access. If the activity reports that it cannot find the camera,
+open **System Settings > Privacy & Security > Camera**, allow the terminal or editor that launched
+Python, quit and reopen that app, and try again. The built-in camera is usually `--camera 0`; an external
+webcam may be `1` or higher.
+
+Set the projector to an extended display, not a mirror, then use `--display N` if the projector is not
+the last display. Start with `python activity.py --mouse --window` to check the installation without a
+camera or projector. Keep the locally downloaded church media in this repository's ignored `art/` folder.
+
 On the first run (and whenever you press **C**) the activity calibrates itself: it shows a black screen and
 then four white squares, and finds them in the camera image (four squares rather than a white screen,
 which lights up the ceiling and walls as much as the picture). Keep people and the flashlight out of the
