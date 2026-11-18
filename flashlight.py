@@ -8,6 +8,7 @@ in absolute terms. The activity keeps its picture dim (dark sky, muted walls, di
 that only the flashlight is that bright.
 """
 import os
+import sys
 import threading
 import time
 
@@ -193,12 +194,30 @@ class SpotDetector:
         return self.pos
 
 
+def camera_backends(platform=None, os_name=None):
+    """Preferred OpenCV camera APIs, followed by automatic detection.
+
+    Asking for the native API first avoids OpenCV choosing a video-file backend on some
+    installations. The automatic backend remains a fallback for unusual cameras/builds.
+    """
+    platform = sys.platform if platform is None else platform
+    os_name = os.name if os_name is None else os_name
+    if platform == "darwin":
+        return (cv2.CAP_AVFOUNDATION, cv2.CAP_ANY)
+    if os_name == "nt":
+        return (cv2.CAP_DSHOW, cv2.CAP_ANY)
+    return (cv2.CAP_ANY,)
+
+
 def open_camera(index):
-    backend = cv2.CAP_DSHOW if os.name == "nt" else cv2.CAP_ANY
-    cap = cv2.VideoCapture(index, backend)
-    if not cap.isOpened():
-        cap = cv2.VideoCapture(index)
-    if not cap.isOpened():
+    cap = None
+    for backend in camera_backends():
+        candidate = cv2.VideoCapture(index, backend)
+        if candidate.isOpened():
+            cap = candidate
+            break
+        candidate.release()
+    if cap is None:
         return None
     for _ in range(5):
         ok, frame = cap.read()

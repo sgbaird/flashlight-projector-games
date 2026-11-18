@@ -353,7 +353,8 @@ class Activity:
         import flashlight
         cap = flashlight.open_camera(self.args.camera)
         if cap is None:
-            self.say("No camera %d found: the mouse is the flashlight." % self.args.camera, 8)
+            detail = " Check System Settings > Privacy & Security > Camera." if sys.platform == "darwin" else ""
+            self.say("No camera %d found: the mouse is the flashlight.%s" % (self.args.camera, detail), 10)
             return
         self.camera = flashlight.Camera(cap)
         self.camera.start()
