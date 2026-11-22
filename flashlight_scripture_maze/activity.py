@@ -1128,7 +1128,9 @@ def parse_args(argv=None):
     p.add_argument("--camera", type=int, default=int(os.environ.get("MAZE_CAMERA", 0)),
                    help="camera index (default 0, or MAZE_CAMERA)")
     p.add_argument("--display", type=int, default=None, help="display to show it on (default: the last one)")
-    p.add_argument("--calibration", default=os.path.join(HERE, "calibration.yaml"),
+    legacy_calibration = os.path.join(os.path.dirname(HERE), "calibration.yaml")
+    default_calibration = legacy_calibration if os.path.exists(legacy_calibration) else os.path.join(HERE, "calibration.yaml")
+    p.add_argument("--calibration", default=default_calibration,
                    help="projection corners in the camera image (projector_points, as in balloon-pop-game)")
     p.add_argument("--mouse", action="store_true", help="no camera; the mouse is the flashlight")
     p.add_argument("--window", action="store_true", help="a window instead of fullscreen")

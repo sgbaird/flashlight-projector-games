@@ -5,7 +5,8 @@ import os
 import pygame
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ART = os.path.join(HERE, "art")
+LEGACY_ART = os.path.join(os.path.dirname(HERE), "art")
+ART = LEGACY_ART if os.path.isdir(LEGACY_ART) else os.path.join(HERE, "art")
 GOLD = (190, 155, 80)
 _cache = {}
 

@@ -40,13 +40,15 @@ def camera_view(screen_img):
     return frame
 
 
-def scene(spot=None, token=None):
+def scene(spot=None, token=None, spots=()):
     img = np.full((1080, 1920), 30, np.uint8)               # dark maze background
     cv2.rectangle(img, (200, 200), (1700, 900), 90, 12)     # muted walls
     if token is not None:
         cv2.circle(img, token, 70, 120, -1)                  # dimmed walker portrait
     if spot is not None:
         cv2.circle(img, spot, 60, 255, -1)                   # flashlight
+    for extra in spots:
+        cv2.circle(img, extra, 60, 255, -1)                 # additional flashlights
     return camera_view(img)
 
 
@@ -106,6 +108,16 @@ def test_spot_found_in_screen_coordinates():
     pos = det.process(scene(spot=(1300, 400)), t + 1)
     assert pos is not None
     assert abs(pos[0] - 1300) < 40 and abs(pos[1] - 400) < 40
+
+
+def test_multiple_spots_are_retained_for_cooperative_activities():
+    det = SpotDetector(CORNERS, (1920, 1080))
+    for i in range(10):
+        det.process(scene(), 100 + i * 0.1)
+    det.process(scene(spots=((500, 350), (1400, 700))), 102)
+    assert len(det.spots) == 2
+    assert any(abs(x - 500) < 45 and abs(y - 350) < 45 for x, y in det.spots)
+    assert any(abs(x - 1400) < 45 and abs(y - 700) < 45 for x, y in det.spots)
 
 
 def test_moving_dim_walker_is_not_a_spot():

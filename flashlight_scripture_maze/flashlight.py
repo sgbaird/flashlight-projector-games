@@ -141,6 +141,7 @@ class SpotDetector:
         self.bg = None
         self.since = None   # time of the first frame after a reset
         self.pos = None
+        self.spots = []
         self.stats = {}     # last frame's numbers, for tuning DIFF and MIN_LEVEL (activity.py --record logs them)
 
     def process(self, frame, now=None):
@@ -163,17 +164,20 @@ class SpotDetector:
         mask = ((diff > DIFF) & (warped > MIN_LEVEL)).astype(np.uint8) * 255
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
         n, labels, stats, cents = cv2.connectedComponentsWithStats(mask)
-        best, best_score = None, 0.0
+        candidates = []
         for i in range(1, n):
             area = stats[i, cv2.CC_STAT_AREA]
             if MIN_AREA <= area <= MAX_AREA:
                 score = float(diff[labels == i].sum())
-                if score > best_score:
-                    best, best_score = i, score
-        # learn the background everywhere, slowly around the spot
+                candidates.append((score, i))
+        candidates.sort(reverse=True)
+        best = candidates[0][1] if candidates else None
+        # Learn the background everywhere, slowly around every accepted spot. Keeping all
+        # accepted blobs lets activities use two flashlights without changing the original
+        # single-spot API (process still returns the brightest one).
         learn = np.ones(self.work[::-1], np.uint8)
-        if best is not None:
-            spot = (labels == best).astype(np.uint8)
+        if candidates:
+            spot = np.isin(labels, [i for _, i in candidates]).astype(np.uint8)
             learn[cv2.dilate(spot, np.ones((15, 15), np.uint8)) > 0] = 0
         cv2.accumulateWeighted(warped, self.bg, BG_RATE, mask=learn)
         cv2.accumulateWeighted(warped, self.bg, SPOT_RATE, mask=1 - learn)
@@ -183,14 +187,17 @@ class SpotDetector:
                       "area": int(stats[best, cv2.CC_STAT_AREA]) if best is not None else 0}
         if best is None:
             self.pos = None
+            self.spots = []
             return None
         sx = self.screen_size[0] / self.work[0]
         sy = self.screen_size[1] / self.work[1]
-        x, y = cents[best][0] * sx, cents[best][1] * sy
+        self.spots = [(cents[i][0] * sx, cents[i][1] * sy) for _, i in candidates]
+        x, y = self.spots[0]
         if self.pos is not None:
             x = SMOOTH * self.pos[0] + (1 - SMOOTH) * x
             y = SMOOTH * self.pos[1] + (1 - SMOOTH) * y
         self.pos = (x, y)
+        self.spots[0] = self.pos
         return self.pos
 
 
@@ -237,6 +244,7 @@ class Camera(threading.Thread):
         self.detector = None
         self.frame = None
         self.spot = None          # (x, y, time) in screen coordinates
+        self.spots = []           # all recent spots; the first is the legacy brightest spot
         self.show_debug = False
         self.lock = threading.Lock()
         self.running = True
@@ -261,6 +269,7 @@ class Camera(threading.Thread):
                     pos = None
                 if pos is not None:
                     self.spot = (pos[0], pos[1], now)
+                    self.spots = [(p[0], p[1], now) for p in getattr(det, "spots", [pos])]
             if self.show_debug:
                 view = frame.copy()
                 if det is not None:
@@ -289,6 +298,11 @@ class Camera(threading.Thread):
     def recent_spot(self, max_age=0.3):
         s = self.spot
         return (s[0], s[1]) if s and time.time() - s[2] <= max_age else None
+
+    def recent_spots(self, max_age=0.3):
+        """All currently visible flashlight spots, brightest first."""
+        now = time.time()
+        return [(x, y) for x, y, seen in self.spots if now - seen <= max_age]
 
     def stop(self):
         self.running = False

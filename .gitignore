@@ -1,8 +1,13 @@
-# Church media downloaded by fetch_art.py: personal use only, never committed
-art/
+# Copyrighted media stays local and is never committed.
+# Legacy location retained after the repository became a collection.
+/art/
+flashlight_scripture_maze/art/
+scooby_doo_pac_man/local_assets/
 
 # This room's calibration
 calibration.yaml
+flashlight_scripture_maze/calibration.yaml
+scooby_doo_pac_man/calibration.yaml
 
 __pycache__/
 .pytest_cache/

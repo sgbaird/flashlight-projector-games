@@ -1,30 +1,34 @@
-# Flashlight Scripture Mazes
+# Flashlight Projector Games
 
-Sterling's (`sgbaird`) projector activity for Sunday family time: a maze is projected on a wall, a camera watches
-it, and children guide a scripture-story figure through the maze with a flashlight. `README.md` covers play and
-setup.
+Sterling's (`sgbaird`) projector activities: a camera watches the projected wall and children control figures with
+flashlights. `README.md` covers the activity chooser and setup.
 
 - Python with OpenCV, NumPy, pygame and PyYAML (`requirements.txt`).
-- `activity.py` is the entry point (pygame, screens, walker, dwell buttons). Screens: title, story card, story
+- `flashlight_scripture_maze/activity.py` is the Scripture Maze entry point (pygame, screens, walker, dwell buttons). Screens: title, story card, story
   pages (the book's panels, with their cited verses as buttons), scripture, maze, ending, and the map that
   reaches all of them; each screen sets its buttons with `set_buttons`. `maze.py` (generation, paths, item
-  placement) and `flashlight.py` (calibration geometry, spot detection, camera thread) have no pygame, so they
+  placement) and `flashlight_scripture_maze/flashlight.py` (calibration geometry, multi-spot detection, camera thread) have no pygame, so they
   are unit-tested. `art.py` turns the downloaded pictures into cards and circular portraits; `pictures.py` draws the
   animals, goal pictures (ark, tent, city) and faint scenery with pygame shapes. `stories.py` lists
   the stories, their picture crops and songs. `fetch_art.py` downloads the pictures, the story pages (`panels` in
   `art/<slug>/story.json`, each with the verses it cites), scripture passages and songs' instrumental
-  accompaniments.
-- Check changes with `python -m pytest tests` and `python -m py_compile *.py`. The activity needs a projector,
-  camera and display, so a CI runner cannot run it; `python activity.py --mouse --window` runs without a camera.
+  accompaniments. `scooby_doo_pac_man/activity.py` is the cooperative Pac-Man-style activity; its pure rules live
+  in `engine.py`, character metadata and portrait fallbacks in `characters.py`, and ignored local media in
+  `local_assets/`.
+- Check changes with `python -m pytest` and
+  `python -m py_compile flashlight_scripture_maze/*.py scooby_doo_pac_man/*.py`. The activities need a projector,
+  camera and display, so a CI runner cannot run them; each `activity.py --mouse --window` runs without a camera.
   Say what was not run.
 - Keep the projected picture dim: dark sky, muted walls (`WALL`), portraits dimmed (`art.portrait`). The
-  detector finds the flashlight as the patch that is both much brighter than the learned background and bright
-  in absolute terms and big enough (`DIFF`, `MIN_LEVEL`, `MIN_AREA` in `flashlight.py`). Anything bright and moving that the activity draws can
+  detector finds a flashlight as a patch that is both much brighter than the learned background and bright
+  in absolute terms and big enough (`DIFF`, `MIN_LEVEL`, `MIN_AREA` in `flashlight_scripture_maze/flashlight.py`). Anything bright and moving that the activity draws can
   be mistaken for the flashlight; never draw a marker at the detected spot (it would detect itself).
 - Content must suit Sunday: scripture stories told as in *Old Testament Stories*, gentle sounds, nothing scary
   or violent (the lions are quiet; David's maze is about gathering stones, not the fight).
-- Call it an **activity**, never a game: on screen, in docs, comments, commits and pull requests.
-- Testing with the camera (local sessions): `python activity.py --camera 1 --record <dir>` saves the camera
+- Call Flashlight Scripture Maze an **activity**, never a game. “Scooby-Doo Pac-Man” is the requested game name,
+  but “activity” is preferred for generic UI and documentation wording.
+- Testing Scripture Maze with the camera (local sessions):
+  `python flashlight_scripture_maze/activity.py --camera 1 --record <dir>` saves the camera
   video, the projected picture and a log. Blur faces locally (an offline model such as `deface`) before
   looking at any camera frame, and never commit the videos: the camera shows the room and family, and the
   screen video shows church pictures. The logs (`log.jsonl`) and a transcript without tool outputs may be
@@ -36,12 +40,20 @@ The *Old Testament Stories* pictures and text and *Children's Songbook* music ar
 licensed for personal, noncommercial use. This repository is public, so:
 
 - Never commit pictures, story text, audio or sheet music from churchofjesuschrist.org (or the *Friend*
-  magazine). `art/` is git-ignored; `fetch_art.py` fills it on the player's computer.
+  magazine). `flashlight_scripture_maze/art/` is git-ignored; `fetch_art.py` fills it on the player's computer.
 - Links are fine: story pages, song pages (`https://www.churchofjesuschrist.org/media/music/songs/<slug>`), and
   the image IDs the content API returns. Before adding a song, check that its page title is the song's name; an
   unknown slug still returns HTTP 200 with the title "Music Library".
 - Mazes are generated, never traced or copied from the *Friend*.
 - A Codex session on GitHub cannot see `art/`, so the activity must work without it (drawn figures).
+
+## Scooby-Doo and Pac-Man media: never commit it
+
+- Keep character headshots, villain portraits, logos, sounds, and other branded media under the ignored
+  `scooby_doo_pac_man/local_assets/` directory. Never commit a private URL manifest.
+- The installer may copy files or download user-supplied direct URLs for private, noncommercial local use. Do not
+  add copyrighted media or fixed proprietary asset URLs to the public repository.
+- The activity must remain usable with its generated maze and drawn initial portraits when local assets are absent.
 
 ## @codex on GitHub
 
@@ -75,9 +87,9 @@ and `ME-EN-250/me-en-250-private`, each with its own separate login.
 - Sessions: never read, print or copy anything under `$CODEX_HOME`.
 - **Reseed** if a run fails with "Reseed CODEX_AUTH_JSON", or the keep-alive fails twice in a row. On Sterling's
   PC, in PowerShell: `$env:CODEX_HOME="$env:USERPROFILE\.codex-ci-maze"; npx -y @openai/codex@0.165.0 login`,
-  then `gh secret set CODEX_AUTH_JSON -R sgbaird/flashlight-scripture-maze < $env:USERPROFILE\.codex-ci-maze\auth.json`,
-  delete the cache entries (`gh cache delete --all -R sgbaird/flashlight-scripture-maze`), run the keep-alive by
-  hand (`gh workflow run codex-keepalive.yml -R sgbaird/flashlight-scripture-maze`), and then delete the local
+  then `gh secret set CODEX_AUTH_JSON -R sgbaird/flashlight-projector-games < $env:USERPROFILE\.codex-ci-maze\auth.json`,
+  delete the cache entries (`gh cache delete --all -R sgbaird/flashlight-projector-games`), run the keep-alive by
+  hand (`gh workflow run codex-keepalive.yml -R sgbaird/flashlight-projector-games`), and then delete the local
   `auth.json`. Never use that CODEX_HOME for local work, and never reuse another repository's CI login: the CI
   copy rotates its tokens, and two holders of one login log each other out.
 - If `npx` fails with "Could not read package.json" under `npm-cache\_npx` (a broken npx cache, as on 2026-11-01),
