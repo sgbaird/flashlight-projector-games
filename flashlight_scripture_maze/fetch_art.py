@@ -24,12 +24,13 @@ API = "https://www.churchofjesuschrist.org/study/api/v3/language-pages/type/cont
 IMG = "https://www.churchofjesuschrist.org/imgs/{id}/full/%21{w}%2C/0/default"
 MANUAL = "/manual/old-testament-stories-2022/"
 HERE = os.path.dirname(os.path.abspath(__file__))
-ART = os.path.join(HERE, "art")
+LEGACY_ART = os.path.join(os.path.dirname(HERE), "art")
+ART = LEGACY_ART if os.path.isdir(LEGACY_ART) else os.path.join(HERE, "art")
 MUSIC_DIR = os.path.join(ART, "music")
 SONG = "https://www.churchofjesuschrist.org/media/music/songs/{slug}?lang=eng"
-UA = {"User-Agent": "flashlight-scripture-maze (personal use; github.com/sgbaird/flashlight-scripture-maze)"}
+UA = {"User-Agent": "flashlight-projector-games (personal use; github.com/sgbaird/flashlight-projector-games)"}
 # the music pages refuse requests without a browser-style agent
-UA_MUSIC = {"User-Agent": "Mozilla/5.0 (compatible; flashlight-scripture-maze; personal use)"}
+UA_MUSIC = {"User-Agent": "Mozilla/5.0 (compatible; flashlight-projector-games; personal use)"}
 
 
 def _get(url, timeout=30, headers=UA, tries=4):

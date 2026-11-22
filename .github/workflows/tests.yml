@@ -17,8 +17,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install opencv-python-headless numpy pyyaml pytest
-      - run: python -m pytest -q tests
-      - run: python -m py_compile *.py
+      - run: python -m pytest -q
+      - run: python -m py_compile flashlight_scripture_maze/*.py scooby_doo_pac_man/*.py
 
   test-macos:
     runs-on: macos-latest
@@ -29,5 +29,5 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt pytest
       - run: python -c "import cv2, pygame"
-      - run: python -m pytest -q tests
-      - run: python -m py_compile *.py
+      - run: python -m pytest -q
+      - run: python -m py_compile flashlight_scripture_maze/*.py scooby_doo_pac_man/*.py
